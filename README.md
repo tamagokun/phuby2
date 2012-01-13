@@ -9,3 +9,4 @@ Huge credit goes to [Phuby](https://github.com/speedmax/phuby) for such an aweso
  - Multiple inheritence with `extend`
  - `send` `respond_to` 
  - `initialize` `finalize`
+ - `is_a` `is_an`

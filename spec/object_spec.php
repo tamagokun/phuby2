@@ -16,7 +16,6 @@ class Describe_Object extends SimpleSpec {
     function should_dispatch_message_passing_using_method_send() {
         $t = new Testing;
         expects($t->send('testing'))->should_be('cooool');
-        
     }
     
     function should_respond_to_a_implemented_method() {
