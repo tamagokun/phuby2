@@ -71,33 +71,32 @@ class Object extends Module
 	
 	public function super($arguments=null)
 	{
+		//TODO: Needs to be able to backtrace up to initial caller, in the spec, this would be "Testing"
 		$arguments = func_get_args();
 		$caller = array_pop(array_slice(debug_backtrace(),1,1));
-		if(empty($caller))
-			return false;
-		else
+		if(empty($caller)) return false;
+		$class = $this->class;
+		$methods = &$class::methods();
+		$aliases = $class::aliases();
+		$method = $caller["function"];
+		//print_r($caller);
+		foreach(array_reverse($aliases) as $alias)
 		{
-			$class = $this->class;
-			$methods = &$class::methods();
-			$aliases = $class::aliases();
-			$method = $caller["function"];
-			foreach(array_reverse($aliases) as $alias)
+			if($alias[1] == $method)
 			{
-				if($alias[1] == $method)
-				{
-					$method = $alias[0];
-					break;
-				}
+				$method = $alias[0];
+				break;
 			}
-			if(isset($methods[$method]) && !empty($methods[$method]))
-			{
-				$callee = array_shift($methods[$method]);
-				$result = $this->send_array($method, $arguments);
-				array_unshift($methods[$method], $callee);
-			}else
-			{
-				$result = call_user_func_array("parent::$method",$arguments);
-			}
+		}
+		if(isset($methods[$method]) && !empty($methods[$method]))
+		{
+			$callee = array_shift($methods[$method]);
+			$result = $this->send_array($method, $arguments);
+			array_unshift($methods[$method], $callee);
+		}else
+		{
+			$class = get_parent_class($this);
+			//$result = call_user_func_array(array($class,$method),$arguments);
 		}
 		return $result;
 	}

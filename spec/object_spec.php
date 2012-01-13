@@ -42,6 +42,7 @@ class Describe_Object extends SimpleSpec {
     
     function should_call_parent_method_using_method_super() {
         $t = new Testing;
+        
         expects($t->super_test('sean'))->should_match('/Hello sean from super/');
     }
     
