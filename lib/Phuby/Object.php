@@ -64,6 +64,11 @@ class Object extends Module
 		return array_key_exists(get_class($object),$this->instances);
 	}
 	
+	public function is_a($class)
+	{
+		return $this instanceof $class;
+	}
+	
 	public function super($arguments=null)
 	{
 		$arguments = func_get_args();
@@ -155,3 +160,5 @@ class Object extends Module
 		unset($this->instance_variables[$property]);
 	}
 }
+
+Object::alias_method("is_an","is_a");
