@@ -124,9 +124,9 @@ class Object extends Module
 	public static function __callStatic($method,$args)
 	{
 		$class = get_called_class();
-		foreach($class::mixins() as $class_name=>$module)
+		foreach($class::ancestors() as $class)
 		{
-			if(method_exists($class_name,$method)) return call_user_func_array(array($class_name,$method),$args);
+			if(method_exists($class,$method)) return call_user_func_array(array($class,$method),$args);
 		}
 	}
 	

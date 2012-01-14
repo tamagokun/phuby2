@@ -42,6 +42,7 @@ class Describe_Object extends SimpleSpec {
     
     function should_call_parent_method_using_method_super() {
         $t = new Testing;
+        
         expects($t->super_test('sean'))->should_match('/Hello sean from super/');
     }
     
@@ -54,8 +55,8 @@ class Describe_Object extends SimpleSpec {
     
     function should_be_able_to_delegate_methods()
     {
-        Testing::delegate('delegated', 'Dude');
-        $t = new Testing;
+        Delegated::delegate('delegated', 'Dude');
+        $t = new Delegated;
         expects($t->delegated())->should_be("delegated from Dude\n");
     }
 }
@@ -104,4 +105,7 @@ class Testing extends Object {
     }
     
 }
+
+class Delegated extends Object { }
+
 Testing::extend('Whoa', 'Dude');
