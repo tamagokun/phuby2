@@ -58,11 +58,6 @@ class Object extends Module
 		$class = get_class($object);
 		$this->instances[$class] = $object;
 	}
-		
-	public function is_injected($object)
-	{
-		return array_key_exists(get_class($object),$this->instances);
-	}
 	
 	public function is_a($class)
 	{
@@ -71,15 +66,16 @@ class Object extends Module
 	
 	public function super($arguments=null)
 	{
-		//TODO: Needs to be able to backtrace up to initial caller, in the spec, this would be "Testing"
 		$arguments = func_get_args();
 		$caller = array_pop(array_slice(debug_backtrace(),1,1));
-		if(empty($caller)) return false;
-		$class = $this->class;
+		$origin = array_pop(array_slice(debug_backtrace(),3,1));
+		if(empty($caller) || empty($origin)) return false;
+		$class = get_class($origin["object"]);
+		$instance = $this->instances[$class];
+		if(!$instance) return false;
 		$methods = &$class::methods();
 		$aliases = $class::aliases();
 		$method = $caller["function"];
-		//print_r($caller);
 		foreach(array_reverse($aliases) as $alias)
 		{
 			if($alias[1] == $method)
@@ -91,12 +87,12 @@ class Object extends Module
 		if(isset($methods[$method]) && !empty($methods[$method]))
 		{
 			$callee = array_shift($methods[$method]);
-			$result = $this->send_array($method, $arguments);
+			$result = $instance->send_array($method, $arguments);
 			array_unshift($methods[$method], $callee);
 		}else
 		{
-			$class = get_parent_class($this);
-			//$result = call_user_func_array(array($class,$method),$arguments);
+			$class = get_parent_class($instance);
+			$result = call_user_func_array(array($class,$method),$arguments);
 		}
 		return $result;
 	}
@@ -113,6 +109,11 @@ class Object extends Module
 			}
 		}
 		return $result;
+	}
+		
+	private function is_injected($object)
+	{
+		return array_key_exists(get_class($object),$this->instances);
 	}
 	
 	public function __call($method,$args)
