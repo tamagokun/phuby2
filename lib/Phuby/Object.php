@@ -160,5 +160,5 @@ class Object extends Module
 		unset($this->instance_variables[$property]);
 	}
 }
-
+Object::extend("Phuby\Delegator");
 Object::alias_method("is_an","is_a");

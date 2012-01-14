@@ -51,6 +51,13 @@ class Describe_Object extends SimpleSpec {
         //$t->super();
         //$this->should_expect_error();
     }
+    
+    function should_be_able_to_delegate_methods()
+    {
+        Testing::delegate('delegated', 'Dude');
+        $t = new Testing;
+        expects($t->delegated())->should_be("delegated from Dude\n");
+    }
 }
 
 
