@@ -57,34 +57,40 @@ class Enumerator extends Object implements \Iterator, \ArrayAccess, \Countable
 	
 	public function valid() {
 		return $this->valid;
-  }
+ 	}
 }
 
 class Enumerable extends Enumerator
 {
 	public function all($block)
 	{
-			
+		foreach($this as $key=>$value) if(!$block(&$value,&$key)) return false;
+		return true;
 	}
 	
 	public function any($block)
 	{
-		
+		foreach($this as $key=>$value) if($block(&$value,&$key)) return true;
+		return false;
 	}
 	
 	public function clear()
 	{
-		
+		$this->array = array();
+		return $this;
 	}
 	
 	public function collect($block)
 	{
-		
+		$result = new Arr;
+		foreach($this as $key=>$value) $result[] = $block(&$value,&$key);
+		return $result;
 	}
 	
 	public function detect($block)
 	{
-		
+		foreach($this as $key=>$value) if($block(&$value,&$key)) return $value;
+		return null;
 	}
 	
 	public function filter($block)
@@ -94,32 +100,35 @@ class Enumerable extends Enumerator
 	
 	public function has_key($key)
 	{
-		
+		return $this->keys()->has_value($key);
 	}
 	
 	public function has_value($value)
 	{
-		
+		return in_array($value,$this->array);
 	}
 	
 	public function index($object)
 	{
-		
+		foreach($this as $key=>$value) if($value == $object) return $key;
+		return null;
 	}
 	
 	public function inject($object, $block)
 	{
-		
+		foreach($this as $key=>$value) $object = $block(&$value,&$key,&$object);
+		return $object;
 	}
 	
 	public function keys()
 	{
-		
+		return array_keys($this->array);
 	}
 	
 	public function none($block)
 	{
-		
+		foreach($this as $key=>$value) if($block(&$value,&$key)) return false;
+		return true;
 	}
 	
 	public function partition($block)
