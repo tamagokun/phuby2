@@ -10,9 +10,9 @@ class Object extends Module
 	
 	public function __construct($arguments = array())
 	{
-		$this->class = get_class($this);
+		$class = get_class($this);
+		$this->class = $class;
 		$this->instances = array();
-		$class = $this->class;
 		$this->instance_variables = $class::properties();
 		$this->superclass = array_pop(class_parents($this->class));
 		if($this->respond_to("initialize"))
@@ -22,6 +22,34 @@ class Object extends Module
 	public function __destruct()
 	{
 		if($this->respond_to("finalize")) $this->send_array("finalize");
+	}
+	
+	public function dup()
+	{
+		return clone $this;
+	}
+	
+	public function inject($object)
+	{
+		if($this->is_injected($object)) return true;
+		$this->instances[get_class($object)] = $object;
+	}
+	
+	public function inspect()
+	{
+		ob_start();
+		print_r($this);
+		return ob_get_clean();
+	}
+	
+	public function is_a($class)
+	{
+		return $this instanceof $class;
+	}
+	
+	public function method_missing($method,$arguments=array())
+	{
+		return $this->send_array($method,$arguments);
 	}
 	
 	public function respond_to($method)
@@ -39,29 +67,15 @@ class Object extends Module
 	
 	public function send_array($method,$args=array())
 	{
-		$class = $this->class;
 		if(!$this->respond_to($method)) return null;
+		
+		$class = $this->class;
 		$methods = $class::methods();
 		if(!isset($methods[$method]) || empty($methods[$method]))
 			return call_user_func_array(array($this,$method), $args);
+		
 		$class = $methods[$method][0][0];
-    $class_method = $methods[$method][0][1];
-		if(!isset($this->instances[$class]) || !$this->instances[$class])
-			$this->instances[$class] = new $class();
-		$this->instances[$class]->inject($this);
-		return call_user_func_array(array($this->instances[$class],$class_method),$args);
-	}
-	
-	public function inject($object)
-	{
-		if($this->is_injected($object)) return true;
-		$class = get_class($object);
-		$this->instances[$class] = $object;
-	}
-	
-	public function is_a($class)
-	{
-		return $this instanceof $class;
+		return call_user_func_array(array($this->ensure_injected($class),$method),$args);
 	}
 	
 	public function super($arguments=null)
@@ -70,9 +84,11 @@ class Object extends Module
 		$caller = array_pop(array_slice(debug_backtrace(),1,1));
 		$origin = array_pop(array_slice(debug_backtrace(),3,1));
 		if(empty($caller) || empty($origin)) return false;
+		
 		$class = get_class($origin["object"]);
-		$instance = $this->instances[$class];
+		$instance = $this->ensure_injected($class);
 		if(!$instance) return false;
+		
 		$methods = &$class::methods();
 		$aliases = $class::aliases();
 		$method = $caller["function"];
@@ -110,7 +126,15 @@ class Object extends Module
 		}
 		return $result;
 	}
-		
+	
+	private function ensure_injected($class)
+	{
+		if(!isset($this->instances[$class]) || !$this->instances[$class])
+			$this->instances[$class] = new $class();
+		$this->instances[$class]->inject($this);
+		return $this->instances[$class];
+	}
+	
 	private function is_injected($object)
 	{
 		return array_key_exists(get_class($object),$this->instances);
