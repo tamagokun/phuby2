@@ -113,7 +113,7 @@ abstract class Module
 	public static function &mixins()
 	{
 		$class = get_called_class();
-		if(isset(Module::$mixins[$class]) === true) return Module::$mixins[$class];
+		if(isset(Module::$mixins[$class])) return Module::$mixins[$class];
 		$mixins = array('aliases' => array(), 'ancestors' => array($class), 'methods' => false, 'properties' => false);
 		foreach(class_parents($class) as $parent)
 		{
