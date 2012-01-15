@@ -50,7 +50,7 @@ class Arr extends Enumerable
 	
 	public function offsetSet($offest,$value)
 	{
-		$this->super((empty($offset)? $this->count() : $offset,$value);
+		$this->super((empty($offset))? $this->count() : $offset,$value);
 	}
 	
 	public function pack($format)
@@ -118,10 +118,10 @@ class Arr extends Enumerable
 		
 	}
 	
-	public function unshift($arguments)
+	/*public function unshift($arguments)
 	{
 		
-	}
+	}*/
 	
 	public function unshift($value)
 	{
