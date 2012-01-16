@@ -105,7 +105,8 @@ class Enumerable extends Enumerator
 	
 	public function filter($block)
 	{
-		
+		$class = $this->class;
+		return $class::new_instance(array_filter($this->array,$callback));
 	}
 	
 	public function has_key($key)
@@ -166,7 +167,10 @@ class Enumerable extends Enumerator
 	
 	public function select($block)
 	{
-		
+		$class = $this->class;
+		$result = $class::new_instance();
+		foreach($this as $key=>$value) if($block(&$value,&$key)) $result[$key] = $value;
+		return $result;
 	}
 	
 	public function shift()
@@ -176,7 +180,11 @@ class Enumerable extends Enumerator
 	
 	public function sort($sort_flags=null)
 	{
-		
+		if(is_null($sort_flags)) $sort_flags = SORT_REGULAR;
+		$array = $this->array;
+		asort($array,$sort_flags);
+		$class = $this->class;
+		return $class::new_instance($array);
 	}
 	
 	public function sort_by($block, $sort_flags=null)

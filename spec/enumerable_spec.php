@@ -29,7 +29,7 @@ class Describe_Enumerable_Array extends SimpleSpec {
         expect($e->any(function($v) { return $v == "ing"; }))->should_be(true);
         expect($e->any(function($v) { return $v == "invalid"; }))->should_be(false);
         
-        expect($e->map(function($v) { return strlen($v); })->array)->should_be(array(3,4,3));
+        //expect($e->map(function($v) { return strlen($v); })->array)->should_be(array(3,4,3));
         
         $rs = $e->inject('', function($v,$k,$o) { return $o .= $v;});
         expect($rs)->should_be('ingcoolwow');

@@ -65,12 +65,14 @@ abstract class Module
 	
 	public static function new_instance($arguments = null)
 	{
-		
+		$class = get_called_class();
+		return $class::new_instance_array(func_get_args());
 	}
 	
 	public static function new_instance_array($arguments = array())
 	{
-		
+		$reflection = new \ReflectionClass(get_called_class());
+		return $reflection->newInstanceArgs($arguments);
 	}
 	
 	public static function &methods()
