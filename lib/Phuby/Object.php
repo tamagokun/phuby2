@@ -29,7 +29,7 @@ class Object extends Module
 		return clone $this;
 	}
 	
-	public function inject($object)
+	public function inject_instance($object)
 	{
 		if($this->is_injected($object)) return true;
 		$this->instances[get_class($object)] = $object;
@@ -131,7 +131,7 @@ class Object extends Module
 	{
 		if(!isset($this->instances[$class]) || !$this->instances[$class])
 			$this->instances[$class] = new $class();
-		$this->instances[$class]->inject($this);
+		$this->instances[$class]->inject_instance($this);
 		return $this->instances[$class];
 	}
 	

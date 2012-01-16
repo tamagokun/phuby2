@@ -124,7 +124,7 @@ class Enumerable extends Enumerator
 		return null;
 	}
 	
-	public function inject($object, $block)
+	public function inject($object,$block)
 	{
 		foreach($this as $key=>$value) $object = $block(&$value,&$key,&$object);
 		return $object;
@@ -153,12 +153,15 @@ class Enumerable extends Enumerator
 	
 	public function rindex($object)
 	{
-		
+		$index = null;
+		foreach($this as $key=>$value) if($value == $object) $index = $key;
+		return $index;
 	}
 	
 	public function replace($array)
 	{
-		
+		$this->array = ($array instanceof Enumerable)? $array->array : $array;
+		return $this;
 	}
 	
 	public function select($block)
@@ -168,7 +171,7 @@ class Enumerable extends Enumerator
 	
 	public function shift()
 	{
-		
+		return empty($this->array)? $this->default : array_shift($this->array);
 	}
 	
 	public function sort($sort_flags=null)
@@ -183,17 +186,23 @@ class Enumerable extends Enumerator
 	
 	public function to_native_a()
 	{
-		
+		$result = $this->array;
+		foreach($result as $key=>$value)
+			if($value instanceof Enumerable) $result[$key] = $value->to_native_a();
+		return $result;
 	}
 	
 	public function values()
 	{
-		
+		return array_values($this->array);
 	}
 	
 	public function values_at($keys)
 	{
-		
+		$keys = func_get_args();
+		$result = new Arr;
+		foreach($keys as $key) $result[] = $this[$key];
+		return $result;
 	}
 }
 
