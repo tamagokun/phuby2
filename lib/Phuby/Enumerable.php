@@ -22,42 +22,42 @@ class Enumerator extends Object implements \Iterator, \ArrayAccess, \Countable
   	return current($this->array);
 	}
 	
-  public function getIterator() {
+	public function getIterator() {
 		return $this;
-  }
-  
-  public function key() {
-  	return key($this->array);
-  }
-  
-  public function offsetExists($offset) {
-  	return isset($this->array[$offset]);
-  }
-  
-  public function offsetGet($offset, $default = null) {
-  	if (is_null($default)) $default = $this->default;
-    return ($this->offsetExists($offset)) ? $this->array[$offset] : $default;
-  }
-  
- 	public function offsetSet($offset, $value) {
-  	$this->array[$offset] = $value;
-  }
-  
-  public function offsetUnset($offset) {
-  	unset($this->array[$offset]);
-  }
-  
-  public function next() {
+	}
+	
+	public function key() {
+ 		return key($this->array);
+	}
+	
+	public function offsetExists($offset) {
+		return isset($this->array[$offset]);
+	}
+	
+	public function offsetGet($offset, $default = null) {
+		if (is_null($default)) $default = $this->default;
+		return ($this->offsetExists($offset)) ? $this->array[$offset] : $default;
+	}
+
+	public function offsetSet($offset, $value) {
+		$this->array[$offset] = $value;
+	}
+	
+	public function offsetUnset($offset) {
+		unset($this->array[$offset]);
+	}
+	
+	public function next() {
 		$this->valid = (next($this->array) !== false);
 	}
 	
-  public function rewind() {
-  	$this->valid = (reset($this->array) !== false);
+	public function rewind() {
+		$this->valid = (reset($this->array) !== false);
 	}
 	
 	public function valid() {
 		return $this->valid;
- 	}
+	}
 }
 
 class Enumerable extends Enumerator
