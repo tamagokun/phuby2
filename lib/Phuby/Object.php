@@ -75,6 +75,7 @@ class Object extends Module
 			return call_user_func_array(array($this,$method), $args);
 		
 		$class = $methods[$method][0][0];
+		$method = $methods[$method][0][1];
 		return call_user_func_array(array($this->ensure_injected($class),$method),$args);
 	}
 	
