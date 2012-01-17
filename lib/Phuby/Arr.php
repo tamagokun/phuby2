@@ -43,8 +43,7 @@ class Arr extends Enumerable
 	
 	public function flatten()
 	{
-		$class = $this->class;
-		$result = $class::new_instance();
+		$result = new $this->class();
 		foreach($this as $value)
 		{
 			if(is_array($value)) $value = new Arr($value);
@@ -91,52 +90,56 @@ class Arr extends Enumerable
 	
 	public function rand($quantity=1)
 	{
-		
+		return new $this->class(array_rand($this->array,$quantity));
 	}
 	
 	public function rassoc($object)
 	{
-		
+		foreach($this as $value) if((is_array($value) || $value instanceof Arr) && $value[1] == $object) return $value;
+		return null;
 	}
 	
 	public function reverse()
 	{
-		
+		return new $this->class(array_reverse($this->array));
 	}
 	
 	public function shift()
 	{
-		
+		return array_shift($this->array);
 	}
 	
 	public function shuffle()
 	{
-		
+		$array = $this->array;
+		shuffle($array);
+		return new $this->class(array($array));
 	}
 	
 	public function slice($offset,$length)
 	{
-		
+		return new $this->class(array_slice($this->array,$offset,$length));
 	}
 	
 	public function splice($offset,$length=0,$replacement=array())
 	{
-		
+		array_splice($this->array,$offset,$length,$replacement);
+		return $this;
 	}
 	
 	public function to_h()
 	{
-		
+		return $this->chunk(2)->inject(new Hash,function($v,$k,$o) { $o[$v[0]] = $v[1]; return $o; });
 	}
 	
 	public function transpose()
 	{
-		
+		$size = $this->count();
 	}
 	
 	public function unique()
 	{
-		
+		return new $this->class(array_unique($this->array));
 	}
 	
 	/*public function unshift($arguments)

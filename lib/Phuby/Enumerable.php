@@ -105,8 +105,7 @@ class Enumerable extends Enumerator
 	
 	public function filter($block)
 	{
-		$class = $this->class;
-		return $class::new_instance(array_filter($this->array,$callback));
+		return new $this->class(array_filter($this->array,$callback));
 	}
 	
 	public function has_key($key)
@@ -144,12 +143,23 @@ class Enumerable extends Enumerator
 	
 	public function partition($block)
 	{
-		
+		$passed = new $this->class();
+		$failed = new $this->class();
+		foreach($this as $key=>$value)
+		{
+			if($block(&$value,&$key))
+				$passed[$key] = $value;
+			else
+				$failed[$key] = $value;
+		}
+		return new Arr(array($passed, $failed));
 	}
 	
 	public function reject($block)
 	{
-		
+		$result = new $this->class();
+		foreach($this as $key=>$value) if(!$block(&$value,&$key)) $result[$key] = $value;
+		return $result;
 	}
 	
 	public function rindex($object)
@@ -167,8 +177,7 @@ class Enumerable extends Enumerator
 	
 	public function select($block)
 	{
-		$class = $this->class;
-		$result = $class::new_instance();
+		$result = new $this->class();
 		foreach($this as $key=>$value) if($block(&$value,&$key)) $result[$key] = $value;
 		return $result;
 	}
@@ -183,13 +192,15 @@ class Enumerable extends Enumerator
 		if(is_null($sort_flags)) $sort_flags = SORT_REGULAR;
 		$array = $this->array;
 		asort($array,$sort_flags);
-		$class = $this->class;
-		return $class::new_instance($array);
+		return new $this->class($array);
 	}
 	
 	public function sort_by($block, $sort_flags=null)
 	{
-		
+		$sorted = $this->inject(new Hash, function($v,$k,$o) use($block) { $o[$k] = $block(&$v,&$k); return $o})->sort($sort_flags);
+		$result = new $this->class();
+		foreach($sorted as $key=>$value) $result[$key] = $this[$key];
+		return $result;
 	}
 	
 	public function to_native_a()
