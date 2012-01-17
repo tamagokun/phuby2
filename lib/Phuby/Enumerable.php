@@ -197,7 +197,7 @@ class Enumerable extends Enumerator
 	
 	public function sort_by($block, $sort_flags=null)
 	{
-		$sorted = $this->inject(new Hash, function($v,$k,$o) use($block) { $o[$k] = $block(&$v,&$k); return $o})->sort($sort_flags);
+		$sorted = $this->inject(new Hash,function($v,$k,$o) use($block) { $o[$k] = $block(&$v,&$k); return $o;})->sort($sort_flags);
 		$result = new $this->class();
 		foreach($sorted as $key=>$value) $result[$key] = $this[$key];
 		return $result;
