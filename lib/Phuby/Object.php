@@ -33,6 +33,23 @@ class Object extends Module
 	{
 		if($this->is_injected($object)) return true;
 		$this->instances[get_class($object)] = $object;
+		//print_r(get_object_vars($object));
+		/*foreach(get_object_vars($object) as $property=>$value)
+		{
+			if(isset($this->$property)) $this->$property = $value;
+		}*/
+		$ignore_properties = get_class_vars("\Phuby\Object");
+		foreach(get_object_vars($this) as $property=>$value)
+		{
+			echo "injection checking $property\n";
+			//print_r($object);
+			if(array_key_exists($property,$ignore_properties)) continue;
+			if(isset($object->$property) && isset($this->$property))
+			{
+				$this->$property = &$object->$property;
+				echo "override from instance!!!!\n";
+			}
+		}
 	}
 	
 	public function inspect()
@@ -85,7 +102,8 @@ class Object extends Module
 		$caller = array_pop(array_slice(debug_backtrace(),1,1));
 		$origin = array_pop(array_slice(debug_backtrace(),3,1));
 		if(empty($caller) || empty($origin)) return false;
-		
+		if(!isset($origin["object"])) $origin = array_pop(array_slice(debug_backtrace(),4,1));
+		if(!isset($origin["object"])) return false;
 		$class = get_class($origin["object"]);
 		$instance = $this->ensure_injected($class);
 		if(!$instance) return false;
