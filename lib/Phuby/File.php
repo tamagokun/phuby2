@@ -75,7 +75,7 @@ class File extends Object
 	public static function extname($file)
 	{
 		$info = pathinfo($file);
-		return (isset($info["extension"]))? $info["extension"] : null;
+		return (isset($info["extension"]))? $info["extension"] : "";
 	}
 	
 	public static function join($path)
