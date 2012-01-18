@@ -97,6 +97,23 @@ class Enumerable extends Enumerator
 		return $result;
 	}
 	
+	public function each($block)
+	{
+		foreach($this as $key=>$value) $block(&$value);
+		return $this;
+	}
+	
+	public function each_index($block)
+	{
+		foreach($this as $key=>$value) $block(&$key);
+		return $this;
+	}
+	
+	public function empty()
+	{
+		return empty($this->array);
+	}
+	
 	public function detect($block)
 	{
 		foreach($this as $key=>$value) if($block(&$value,&$key)) return $value;
