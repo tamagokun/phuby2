@@ -67,8 +67,8 @@ class Arr extends Enumerable
 	
 	public function offsetSet($offest,$value)
 	{
-		
-		$this->super((empty($offset))? $this->count() : $offset,$value);
+		$offset = (empty($offset))? $this->count() : $offset;
+		$this->array[$offset] = $value;
 	}
 	
 	public function pack($format)

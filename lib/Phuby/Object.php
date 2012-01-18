@@ -33,21 +33,13 @@ class Object extends Module
 	{
 		if($this->is_injected($object)) return true;
 		$this->instances[get_class($object)] = $object;
-		//print_r(get_object_vars($object));
-		/*foreach(get_object_vars($object) as $property=>$value)
-		{
-			if(isset($this->$property)) $this->$property = $value;
-		}*/
 		$ignore_properties = get_class_vars("\Phuby\Object");
 		foreach(get_object_vars($this) as $property=>$value)
 		{
-			echo "injection checking $property\n";
-			//print_r($object);
 			if(array_key_exists($property,$ignore_properties)) continue;
-			if(isset($object->$property) && isset($this->$property))
+			if(property_exists($object,$property) && isset($this->$property))
 			{
 				$this->$property = &$object->$property;
-				echo "override from instance!!!!\n";
 			}
 		}
 	}
@@ -190,12 +182,13 @@ class Object extends Module
 	
 	public function __set($property,$value)
 	{
-		if(isset($this->$property))
-			return $this->instance_variables[$property] = $value;
-		foreach($this->instances as $instance)
-		{
-			if(isset($instance->$property)) $instance->$property = $value;
-		}
+		$this->$property = $value;
+		//if(isset($this->$property))
+		//	return $this->instance_variables[$property] = $value;
+		//foreach($this->instances as $instance)
+		//{
+		//	if(isset($instance->$property)) $instance->$property = $value;
+		//}
 	}
 	
 	public function __unset($property)
