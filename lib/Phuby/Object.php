@@ -182,13 +182,12 @@ class Object extends Module
 	
 	public function __set($property,$value)
 	{
-		$this->$property = $value;
-		//if(isset($this->$property))
-		//	return $this->instance_variables[$property] = $value;
-		//foreach($this->instances as $instance)
-		//{
-		//	if(isset($instance->$property)) $instance->$property = $value;
-		//}
+		if(isset($this->$property))
+			return $this->instance_variables[$property] = $value;
+		foreach($this->instances as $instance)
+		{
+			if(isset($instance->$property)) $instance->$property = $value;
+		}
 	}
 	
 	public function __unset($property)
