@@ -109,11 +109,6 @@ class Enumerable extends Enumerator
 		return $this;
 	}
 	
-	public function empty()
-	{
-		return empty($this->array);
-	}
-	
 	public function detect($block)
 	{
 		foreach($this as $key=>$value) if($block(&$value,&$key)) return $value;
