@@ -4,17 +4,16 @@ namespace Phuby;
 class Object extends Module
 {	
 	public $class;
-	public $instances;
-	public $instance_variables;
+	public $reflection;
+	public $instance;
 	public $superclass;
 	
 	public function __construct($arguments = array())
 	{
-		$class = get_class($this);
-		$this->class = $class;
-		$this->instances = array();
-		$this->instance_variables = $class::properties();
-		$this->superclass = array_pop(class_parents($this->class));
+		$this->class = Module::derived(get_class($this));
+		//$this->superclass = array_pop(class_parents($this->class));
+		$this->reflection = new \ReflectionClass($this->class);
+		$this->instance = $this->reflection->newInstance($arguments);
 		if($this->respond_to("initialize"))
 			$this->send_array("initialize",func_get_args());
 	}
@@ -27,21 +26,6 @@ class Object extends Module
 	public function dup()
 	{
 		return clone $this;
-	}
-	
-	public function inject_instance($object)
-	{
-		if($this->is_injected($object)) return true;
-		$this->instances[get_class($object)] = $object;
-		$ignore_properties = get_class_vars("\Phuby\Object");
-		foreach(get_object_vars($this) as $property=>$value)
-		{
-			if(array_key_exists($property,$ignore_properties)) continue;
-			if(property_exists($object,$property) && isset($this->$property))
-			{
-				$this->$property = &$object->$property;
-			}
-		}
 	}
 	
 	public function inspect()
@@ -63,9 +47,7 @@ class Object extends Module
 	
 	public function respond_to($method)
 	{
-		$class = $this->class;
-		$methods = $class::methods();
-		return in_array($method, get_class_methods($this->class)) || (in_array($method, array_keys($methods)) && !empty($methods[$method]));
+		return in_array($method, get_class_methods($this->class));
 	}
 	
 	public function send($method, $arguments=null)
@@ -77,15 +59,7 @@ class Object extends Module
 	public function send_array($method,$args=array())
 	{
 		if(!$this->respond_to($method)) return null;
-		
-		$class = $this->class;
-		$methods = $class::methods();
-		if(!isset($methods[$method]) || empty($methods[$method]))
-			return call_user_func_array(array($this,$method), $args);
-		
-		$class = $methods[$method][0][0];
-		$method = $methods[$method][0][1];
-		return call_user_func_array(array($this->ensure_injected($class),$method),$args);
+		return $this->reflection->getMethod($method)->invokeArgs($this->instance,$args);
 	}
 	
 	public function super($arguments=null)
@@ -127,28 +101,9 @@ class Object extends Module
 	public static function call($prop)
 	{
 		$result = null;
-		foreach(self::$mixins as $name=>$class)
-		{
-			if(isset($name::$$prop))
-			{
-				$result = &$name::$$prop;
-				break;
-			}
-		}
+		$class = $this->class;
+		if(isset($class::$$prop)) $result = &$class::$$prop;
 		return $result;
-	}
-	
-	private function ensure_injected($class)
-	{
-		if(!isset($this->instances[$class]) || !$this->instances[$class])
-			$this->instances[$class] = new $class();
-		$this->instances[$class]->inject_instance($this);
-		return $this->instances[$class];
-	}
-	
-	private function is_injected($object)
-	{
-		return array_key_exists(get_class($object),$this->instances);
 	}
 	
 	public function __call($method,$args)
@@ -158,41 +113,32 @@ class Object extends Module
 	
 	public static function __callStatic($method,$args)
 	{
-		$class = get_called_class();
-		foreach($class::ancestors() as $class)
-		{
-			if(method_exists($class,$method)) return call_user_func_array(array($class,$method),$args);
-		}
+		if(method_exists($this->class,$method))
+			return $this->reflection->getMethod($method)->invokeArgs(null,$args);
+		return null;
 	}
 	
 	public function __get($property)
 	{
-		if(isset($this->$property)) return $this->instance_variables[$property];
-		foreach($this->instances as $instance)
-		{
-			if(isset($instance->$property)) return $instance->$property;
-		}
+		if(isset($this->$property)) return $this->instance->$property;
 		return null;
 	}
 	
 	public function __isset($property)
 	{
-		return isset($this->instance_variables[$property]);
+		return isset($this->instance->$property);
 	}
 	
 	public function __set($property,$value)
 	{
 		if(isset($this->$property))
-			return $this->instance_variables[$property] = $value;
-		foreach($this->instances as $instance)
-		{
-			if(isset($instance->$property)) $instance->$property = $value;
-		}
+			return $this->instance->$property = $value;
+		return null;
 	}
 	
 	public function __unset($property)
 	{
-		unset($this->instance_variables[$property]);
+		unset($this->instance->$property);
 	}
 }
 Object::extend("Phuby\Delegator");

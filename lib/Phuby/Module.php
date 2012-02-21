@@ -36,13 +36,6 @@ abstract class Module
 		return $mixins["aliases"];
 	}
 	
-	public static function ancestors()
-	{
-		$class = get_called_class();
-		$mixins = $class::mixins();
-		return $mixins["ancestors"];
-	}
-	
 	public static function extend($modules)
 	{
 		$modules = (is_array($modules))? $modules : func_get_args();
@@ -52,15 +45,24 @@ abstract class Module
 		{
 			if(!in_array($module, $mixins['ancestors']))
 			{
-				array_unshift($mixins["ancestors"],$module);
-				if(in_array(__CLASS__,class_parents($module)))
-				{
-					foreach( array_reverse($module::ancestors()) as $ancestor)
-						if(!in_array($ancestor, $mixins['ancestors'])) array_unshift($mixins['ancestors'],$ancestor);
-				}
+				array_unshift($mixins['ancestors'],$module);
 			}
 		}
 		$class::update_derived_modules();
+	}
+	
+	public static function derived($class)
+	{
+		return (isset(Module::$mixins[$class]))? Module::$mixins[$class]['derived'] : null;
+	}
+	
+	public static function &mixins()
+	{
+		$class = get_called_class();
+		if(!isset(Module::$ancestors[$class])) return Module::$ancestors[$class];
+		$mixin = array('ancestors'=>array(),'aliases'=>array(),'derived'=>'');
+		Module::$ancestors[$class] = $mixin;
+		return Module::$ancestors[$class];
 	}
 	
 	public static function new_instance($arguments = null)
@@ -75,97 +77,13 @@ abstract class Module
 		return $reflection->newInstanceArgs($arguments);
 	}
 	
-	public static function &methods()
-	{
-		$class = get_called_class();
-		$mixins = &$class::mixins();
-		if($mixins["methods"]) return $mixins["methods"];
-		$mixins["methods"] = array();
-		$ancestors = array();
-		foreach($mixins["ancestors"] as $ancestor)
-		{
-			if(isset(Module::$mixins[$ancestor]) && Module::$mixins[$ancestor]["methods"])
-			{
-				$mixins["methods"] = (array)Module::$mixins[$ancestor]["methods"];
-				foreach($ancestors as $key=>$module)
-					if(in_array($module,Module::$mixins[$ancestor]["ancestors"])) unset($ancestors[$key]);
-				break;
-			}else
-			{
-				array_unshift($ancestors, $ancestor);
-			}
-		}
-		$methods = get_class_methods($class);
-		foreach($ancestors as $ancestor)
-		{
-			foreach(get_class_methods($ancestor) as $method)
-			{
-				if(!in_array($method,$methods))
-				{
-					if(!isset($mixins["methods"][$method])) $mixins["methods"][$method] = array();
-					array_unshift($mixins["methods"][$method], array($ancestor, $method));
-				}
-			}
-		}
-		foreach($mixins["aliases"] as $alias)
-			Module::alias($class,$alias[0],$alias[1]);
-		return $mixins["methods"];
-	}
-	
-	public static function &mixins()
-	{
-		$class = get_called_class();
-		if(isset(Module::$mixins[$class])) return Module::$mixins[$class];
-		$mixins = array('aliases' => array(), 'ancestors' => array($class), 'methods' => false, 'properties' => false);
-		foreach(class_parents($class) as $parent)
-		{
-			if(!in_array($parent,$mixins['ancestors']))
-			{
-				if(in_array(__CLASS__,class_parents($parent)))
-				{
-					$method = __FUNCTION__;
-					$parent_mixins = $parent::$method();
-					$mixins['ancestors'] = array_merge($mixins['ancestors'], $parent_mixins['ancestors']);
-				}else
-				{
-					array_push($mixins['ancestors'], $parent);
-				}
-			}
-		}
-		Module::$mixins[$class] = $mixins;
-		return Module::$mixins[$class];
-	}
-	
-	public static function &properties()
-	{
-		$class = get_called_class();
-		$mixins = &$class::mixins();
-		if($mixins["properties"]) return $mixins["properties"];
-		
-		$mixins["properties"] = array();
-		$ancestors = $mixins["ancestors"];
-		
-		$properties = get_class_vars("\Phuby\Object");
-		foreach(array_reverse($ancestors) as $ancestor)
-		{
-			foreach(get_class_vars($ancestor) as $property=>$value)
-				if(!isset($properties[$property])) $mixins["properties"][$property] = $value;
-		}
-		return $mixins["properties"];
-	}
-	
 	public static function update_derived_modules()
 	{
-		$class = get_called_class();
-		$ancestors = $class::ancestors();
-		foreach( Module::$mixins as $module => &$mixins)
+		foreach(Module::$mixins as &$mixin)
 		{
-			if($module != $class && in_array($class,$mixins["ancestors"]))
-			{
-				array_splice($mixins["ancestors"], array_search($class,$mixins["ancestors"]), count($mixins["ancestors"]),$ancestors);
-				$mixins["methods"] = false;
-				$mixins["properties"] = false;
-			}
+			$source = new Source($mixin['ancestors']);
+			$source->compile();
+			$mixin['derived'] = $source->name();
 		}
 	}
 }
