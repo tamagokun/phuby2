@@ -72,15 +72,24 @@ class Source
 		$result = null;
 		foreach($ref->getMethods() as $method)
 		{
-			if(in_array($method->getName(),$this->existing)) continue;
+			$name = $this->method_name_filter($method);
+			if(in_array($name,$this->existing)) continue;
 			if(strpos($method->getDeclaringClass()->getName(),"Module") !== false) continue;
 			if(strpos($method->getName(),"__") !== false) continue;
-			$this->existing[] = $method->getName();
+			$this->existing[] = $name;
 			$source = file($method->getFileName());
 			$start = $method->getStartLine()-1;
 			$length = $method->getEndLine() - $start;
-			$result .= implode("", array_slice($source, $start, $length));
+			$result .= str_replace($method->getName(),$name,implode("", array_slice($source, $start, $length)));
 		}
 		return $result;
+	}
+	
+	protected function method_name_filter(\ReflectionMethod $method)
+	{
+		$name = $method->getName();
+		$declared_clean = str_replace("\\","_",$method->getDeclaringClass()->getName());
+		if(in_array($name,$this->existing)) $name = "__super_{$declared_clean}_{$name}";
+		return $name;
 	}
 }
