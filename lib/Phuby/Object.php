@@ -4,16 +4,24 @@ namespace Phuby;
 class Object extends Module
 {	
 	public $class;
+	public $derived;
 	public $reflection;
 	public $instance;
 	public $superclass;
 	
 	public function __construct($arguments = array())
 	{
-		$this->class = \Phuby\Module::derived(get_class($this));
+		$this->class = get_class($this);
+		$this->derived = \Phuby\Module::derived($this->class);
 		//$this->superclass = array_pop(class_parents($this->class));
-		$this->reflection = new \ReflectionClass($this->class);
+		$this->reflection = new \ReflectionClass($this->derived);
 		$this->instance = $this->reflection->newInstance();
+		if($this->class != $this->derived)
+		{
+			$this->instance->class = get_class($this);
+			$this->instance->reflection = $this->reflection;
+			$this->instance->instance = $this->instance;
+		}
 		if($this->respond_to("initialize"))
 			$this->send_array("initialize",func_get_args());
 	}
@@ -47,7 +55,7 @@ class Object extends Module
 	
 	public function respond_to($method)
 	{
-		$class = get_class($this);
+		$class = $this->class;
 		if(array_key_exists($method, $class::aliases())) return true;
 		return in_array($method,array_map(function($m) { return $m->getName(); },$this->reflection->getMethods()));
 	}
@@ -61,7 +69,7 @@ class Object extends Module
 	public function send_array($method,$args=array())
 	{
 		if(!$this->respond_to($method)) return null;
-		$class = get_class($this);
+		$class = $this->class;
 		$aliases = $class::aliases();
 		if(array_key_exists($method, $aliases)) $method = $aliases[$method];
 		if(in_array($method,array_map(function($m) { return $m->getName(); },$this->reflection->getMethods())))
@@ -71,38 +79,18 @@ class Object extends Module
 	
 	public function super($arguments=null)
 	{
-		/*$arguments = func_get_args();
+		$arguments = func_get_args();
 		$caller = array_pop(array_slice(debug_backtrace(),1,1));
-		$origin = array_pop(array_slice(debug_backtrace(),3,1));
-		if(empty($caller) || empty($origin)) return false;
-		if(!isset($origin["object"])) $origin = array_pop(array_slice(debug_backtrace(),4,1));
-		if(!isset($origin["object"])) return false;
-		$class = get_class($origin["object"]);
-		$instance = $this->ensure_injected($class);
-		if(!$instance) return false;
-		
-		$methods = &$class::methods();
-		$aliases = $class::aliases();
-		$method = $caller["function"];
-		foreach(array_reverse($aliases) as $alias)
+		$method = $caller['function'];
+		$class = $this->class;
+		$mixins = $class::mixins();
+		foreach(array_reverse($mixins['ancestors']) as $ancestor)
 		{
-			if($alias[1] == $method)
-			{
-				$method = $alias[0];
-				break;
-			}
+			$class_clean = str_replace("\\","_",$ancestor);
+			if($this->respond_to("__super_{$class_clean}_{$method}"));
+				return $this->send_array("__super_{$class_clean}_{$method}",$arguments);
 		}
-		if(isset($methods[$method]) && !empty($methods[$method]))
-		{
-			$callee = array_shift($methods[$method]);
-			$result = $instance->send_array($method, $arguments);
-			array_unshift($methods[$method], $callee);
-		}else
-		{
-			$class = get_parent_class($instance);
-			$result = call_user_func_array(array($class,$method),$arguments);
-		}
-		return $result;*/
+		return null;
 	}
 	
 	public static function call($prop)
