@@ -10,10 +10,10 @@ class Object extends Module
 	
 	public function __construct($arguments = array())
 	{
-		$this->class = Module::derived(get_class($this));
+		$this->class = \Phuby\Module::derived(get_class($this));
 		//$this->superclass = array_pop(class_parents($this->class));
 		$this->reflection = new \ReflectionClass($this->class);
-		$this->instance = $this->reflection->newInstance($arguments);
+		$this->instance = $this->reflection->newInstance();
 		if($this->respond_to("initialize"))
 			$this->send_array("initialize",func_get_args());
 	}
@@ -47,7 +47,9 @@ class Object extends Module
 	
 	public function respond_to($method)
 	{
-		return in_array($method, get_class_methods($this->class));
+		$class = get_class($this);
+		if(array_key_exists($method, $class::aliases())) return true;
+		return in_array($method,array_map(function($m) { return $m->getName(); },$this->reflection->getMethods()));
 	}
 	
 	public function send($method, $arguments=null)
@@ -59,12 +61,17 @@ class Object extends Module
 	public function send_array($method,$args=array())
 	{
 		if(!$this->respond_to($method)) return null;
-		return $this->reflection->getMethod($method)->invokeArgs($this->instance,$args);
+		$class = get_class($this);
+		$aliases = $class::aliases();
+		if(array_key_exists($method, $aliases)) $method = $aliases[$method];
+		if(in_array($method,array_map(function($m) { return $m->getName(); },$this->reflection->getMethods())))
+			return $this->reflection->getMethod($method)->invokeArgs($this->instance,$args);
+		return null;
 	}
 	
 	public function super($arguments=null)
 	{
-		$arguments = func_get_args();
+		/*$arguments = func_get_args();
 		$caller = array_pop(array_slice(debug_backtrace(),1,1));
 		$origin = array_pop(array_slice(debug_backtrace(),3,1));
 		if(empty($caller) || empty($origin)) return false;
@@ -95,14 +102,14 @@ class Object extends Module
 			$class = get_parent_class($instance);
 			$result = call_user_func_array(array($class,$method),$arguments);
 		}
-		return $result;
+		return $result;*/
 	}
 	
 	public static function call($prop)
 	{
 		$result = null;
-		$class = $this->class;
-		if(isset($class::$$prop)) $result = &$class::$$prop;
+		//$class = $this->class;
+		//if(isset($class::$$prop)) $result = &$class::$$prop;
 		return $result;
 	}
 	
@@ -113,8 +120,8 @@ class Object extends Module
 	
 	public static function __callStatic($method,$args)
 	{
-		if(method_exists($this->class,$method))
-			return $this->reflection->getMethod($method)->invokeArgs(null,$args);
+		//if(method_exists($this->class,$method))
+		//	return $this->reflection->getMethod($method)->invokeArgs(null,$args);
 		return null;
 	}
 	

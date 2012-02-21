@@ -8,18 +8,15 @@ abstract class Module
 	public static function alias($new,$old)
 	{
 		$class = get_called_class();
-		$methods = &$class::methods();
-		$methods[$new] = isset($methods[$old])? $methods[$old] : array(array($class,$old));
-		$methods[$old] = array(array($class,$new));
+		$mixins = &$class::mixins();
+		$mixins['aliases'][$new] = $old;
+		//array($class,$old);
 	}
 	
 	public static function alias_method($new,$old)
 	{
 		$class = get_called_class();
-		$mixins = &$class::mixins();
-		array_push($mixins["aliases"], array($new,$old));
 		$class::alias($new,$old);
-		$class::update_derived_modules();
 	}
 	
 	public static function alias_method_chain($method,$with)
@@ -59,10 +56,10 @@ abstract class Module
 	public static function &mixins()
 	{
 		$class = get_called_class();
-		if(!isset(Module::$ancestors[$class])) return Module::$ancestors[$class];
+		if(isset(Module::$mixins[$class])) return Module::$mixins[$class];
 		$mixin = array('ancestors'=>array(),'aliases'=>array(),'derived'=>'');
-		Module::$ancestors[$class] = $mixin;
-		return Module::$ancestors[$class];
+		Module::$mixins[$class] = $mixin;
+		return Module::$mixins[$class];
 	}
 	
 	public static function new_instance($arguments = null)
@@ -79,9 +76,11 @@ abstract class Module
 	
 	public static function update_derived_modules()
 	{
-		foreach(Module::$mixins as &$mixin)
+		foreach(Module::$mixins as $class=>&$mixin)
 		{
-			$source = new Source($mixin['ancestors']);
+			$classes = $mixin['ancestors'];
+			$classes[] = $class;
+			$source = new Source($classes);
 			$source->compile();
 			$mixin['derived'] = $source->name();
 		}
