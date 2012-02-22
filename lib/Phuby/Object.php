@@ -14,13 +14,16 @@ class Object extends Module
 		$this->class = get_class($this);
 		$this->derived = \Phuby\Module::derived($this->class);
 		//$this->superclass = array_pop(class_parents($this->class));
-		$this->reflection = new \ReflectionClass($this->derived);
-		$this->instance = $this->reflection->newInstance();
-		if($this->class != $this->derived)
+		if(!empty($this->derived))
 		{
-			$this->instance->class = get_class($this);
-			$this->instance->reflection = $this->reflection;
-			$this->instance->instance = $this->instance;
+			$this->reflection = new \ReflectionClass($this->derived);
+			$this->instance = $this->reflection->newInstance();
+			if($this->class != $this->derived)
+			{
+				$this->instance->class = get_class($this);
+				$this->instance->reflection = $this->reflection;
+				$this->instance->instance = $this->instance;
+			}
 		}
 		if($this->respond_to("initialize"))
 			$this->send_array("initialize",func_get_args());
@@ -56,8 +59,9 @@ class Object extends Module
 	public function respond_to($method)
 	{
 		$class = $this->class;
+		if(method_exists($this,$method)) return true;
 		if(array_key_exists($method, $class::aliases())) return true;
-		return in_array($method,array_map(function($m) { return $m->getName(); },$this->reflection->getMethods()));
+		return $this->reflection && in_array($method,array_map(function($m) { return $m->getName(); },$this->reflection->getMethods()));
 	}
 	
 	public function send($method, $arguments=null)
@@ -72,6 +76,7 @@ class Object extends Module
 		$class = $this->class;
 		$aliases = $class::aliases();
 		if(array_key_exists($method, $aliases)) $method = $aliases[$method];
+		if(method_exists($this,$method)) return call_user_func_array(array($this,$method),$args);
 		if(in_array($method,array_map(function($m) { return $m->getName(); },$this->reflection->getMethods())))
 			return $this->reflection->getMethod($method)->invokeArgs($this->instance,$args);
 		return null;
