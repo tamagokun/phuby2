@@ -13,7 +13,7 @@ class Object extends Module
 	{
 		$this->class = get_class($this);
 		$this->derived = \Phuby\Module::derived($this->class);
-		//$this->superclass = array_pop(class_parents($this->class));
+		$this->superclass = array_pop(class_parents($this->class));
 		if(!empty($this->derived))
 		{
 			$this->reflection = new \ReflectionClass($this->derived);
