@@ -101,8 +101,11 @@ class Object extends Module
 	public static function call($prop)
 	{
 		$result = null;
-		//$class = $this->class;
-		//if(isset($class::$$prop)) $result = &$class::$$prop;
+		$class = get_called_class();
+		$mixin = $class::mixins();
+		$derived = $mixin['derived'];
+		if($derived && isset($derived::$$prop))
+			$result =  &$derived::$$prop;
 		return $result;
 	}
 	
@@ -113,8 +116,10 @@ class Object extends Module
 	
 	public static function __callStatic($method,$args)
 	{
-		//if(method_exists($this->class,$method))
-		//	return $this->reflection->getMethod($method)->invokeArgs(null,$args);
+		$class = get_called_class();
+		$mixin = $class::mixins();
+		if($mixin['derived'] && method_exists($mixin['derived'],$method))
+			return call_user_func_array(array($mixin['derived'],$method),$args);
 		return null;
 	}
 	
