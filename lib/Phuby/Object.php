@@ -92,7 +92,7 @@ class Object extends Module
 		foreach(array_reverse($mixins['ancestors']) as $ancestor)
 		{
 			$class_clean = str_replace("\\","_",$ancestor);
-			if($this->respond_to("__super_{$class_clean}_{$method}"));
+			if($this->respond_to("__super_{$class_clean}_{$method}"))
 				return $this->send_array("__super_{$class_clean}_{$method}",$arguments);
 		}
 		return null;
