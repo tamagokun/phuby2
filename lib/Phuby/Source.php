@@ -9,12 +9,12 @@ class Source
 	{
 		$classes = (is_array($classes))? $classes : func_get_args();
 		$this->classes = $classes;
-		$this->existing = array();
+		$this->existing = array("constants"=>array(),"methods"=>array(),"properties"=>array());
 	}
 	
 	public function clean()
 	{
-		$this->existing = array();
+		$this->existing = array("constants"=>array(),"methods"=>array(),"properties"=>array());
 		$this->source = null;
 		$this->name = null;
 	}
@@ -58,6 +58,8 @@ class Source
 		$result = array();
 		foreach($ref->getConstants() as $constant=>$value)
 		{
+			if(in_array($constant,$this->existing["constants"])) continue;
+			$this->existing["constants"][] = $constant;
 			$result[] = "const $constant = {$this->string_prepare($value)};";
 		}
 		return implode("\n",$result);
@@ -68,6 +70,8 @@ class Source
 		$result = array();
 		foreach($ref->getDefaultProperties() as $prop=>$value)
 		{
+			if(in_array($prop,$this->existing["properties"])) continue;
+			$this->existing["properties"][] = $prop;
 			$default = $ref->getProperty($prop);
 			$output = \Reflection::getModifierNames($default->getModifiers());
 			$output[] = "$$prop";
@@ -84,10 +88,10 @@ class Source
 		foreach($ref->getMethods() as $method)
 		{
 			$name = $this->method_name_filter($method);
-			if(in_array($name,$this->existing)) continue;
+			if(in_array($name,$this->existing["methods"])) continue;
 			if(strpos($method->getDeclaringClass()->getName(),"Module") !== false) continue;
 			if(strpos($method->getName(),"__") !== false) continue;
-			$this->existing[] = $name;
+			$this->existing["methods"][] = $name;
 			$source = file($method->getFileName());
 			$start = $method->getStartLine()-1;
 			$length = $method->getEndLine() - $start;
@@ -100,7 +104,7 @@ class Source
 	{
 		$name = $method->getName();
 		$declared_clean = str_replace("\\","_",$method->getDeclaringClass()->getName());
-		if(in_array($name,$this->existing)) $name = "__super_{$declared_clean}_{$name}";
+		if(in_array($name,$this->existing["methods"])) $name = "__super_{$declared_clean}_{$name}";
 		return $name;
 	}
 	
