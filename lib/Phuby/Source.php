@@ -34,6 +34,7 @@ class Source
 		foreach($this->classes as $class)
 		{
 			$ref = new \ReflectionClass($class);
+			$this->source .= $this->constant_source($ref);
 			$this->source .= $this->property_source($ref);
 			$this->source .= $this->method_source($ref);
 		}
@@ -52,6 +53,16 @@ class Source
 		return (!empty($this->source))? $this->source : $this->generate();
 	}
 	
+	protected function constant_source(\ReflectionClass $ref)
+	{
+		$result = array();
+		foreach($ref->getConstants() as $constant=>$value)
+		{
+			$result[] = "const $constant = {$this->string_prepare($value)};";
+		}
+		return implode("\n",$result);
+	}
+	
 	protected function property_source(\ReflectionClass $ref)
 	{
 		$result = array();
@@ -60,7 +71,7 @@ class Source
 			$default = $ref->getProperty($prop);
 			$output = \Reflection::getModifierNames($default->getModifiers());
 			$output[] = "$$prop";
-			if($value) $output[] = "=$value";
+			if($value) $output[] = "={$this->string_prepare($value)}";
 			$output[] = ";";
 			$result[] = implode(" ",$result);
 		}
@@ -91,5 +102,10 @@ class Source
 		$declared_clean = str_replace("\\","_",$method->getDeclaringClass()->getName());
 		if(in_array($name,$this->existing)) $name = "__super_{$declared_clean}_{$name}";
 		return $name;
+	}
+	
+	protected function string_prepare($value)
+	{
+		return (is_string($value))? "\"$value\"" : $value;
 	}
 }
