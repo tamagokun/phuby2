@@ -48,6 +48,11 @@ class Object extends Module
 		return ob_get_clean();
 	}
 	
+	public function instance_variables()
+	{
+		return array_diff_key(get_object_vars($this->instance),get_class_vars($this->class));
+	}
+	
 	public function is_a($class)
 	{
 		return $this instanceof $class;
