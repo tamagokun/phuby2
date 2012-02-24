@@ -96,7 +96,7 @@ abstract class Module
 		foreach(Module::$mixins as $class=>&$mixin)
 		{
 			$classes = $mixin['ancestors'];
-			$classes[] = $class;
+			array_unshift($classes,$class);
 			$source = new Source($classes);
 			$source->compile();
 			$mixin['derived'] = $source->name();
