@@ -95,7 +95,8 @@ class Source
 			$source = file($method->getFileName());
 			$start = $method->getStartLine()-1;
 			$length = $method->getEndLine() - $start;
-			$result .= str_replace($method->getName(),$name,implode("", array_slice($source, $start, $length)));
+			$source[$start] = str_replace($method->getName(),$name,$source[$start]);
+			$result .= implode("", array_slice($source, $start, $length));
 		}
 		return $result;
 	}
