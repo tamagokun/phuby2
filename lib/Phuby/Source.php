@@ -3,13 +3,14 @@ namespace Phuby;
 
 class Source
 {
-	protected $classes,$source,$name,$existing;
+	protected $classes,$source,$name,$existing,$use;
 	
 	public function __construct($classes)
 	{
 		$classes = (is_array($classes))? $classes : func_get_args();
 		$this->classes = $classes;
 		$this->existing = array("constants"=>array(),"methods"=>array(),"properties"=>array());
+		$this->use = array();
 	}
 	
 	public function clean()
@@ -17,11 +18,12 @@ class Source
 		$this->existing = array("constants"=>array(),"methods"=>array(),"properties"=>array());
 		$this->source = null;
 		$this->name = null;
+		$this->use = array();
 	}
 	
 	public function compile()
 	{
-		$raw = "<?php class {$this->name()} { {$this->source()} } ?>";
+		$raw = "<?php {$this->namespace_aliases()} class {$this->name()} { {$this->source()} } ?>";
 		if(ini_get('allow_url_include') > 0)
 			return require 'data:text/plain,base64,'.base64_encode($raw);
 		$tmp=array_search('uri', @array_flip(stream_get_meta_data($GLOBALS[mt_rand()]=tmpfile())));
@@ -46,6 +48,11 @@ class Source
 		if(!$this->name)
 			$this->name = "__Derived_".implode("_",str_replace("\\","_",$this->classes))."_".uniqid();
 		return $this->name;
+	}
+	
+	public function namespace_aliases()
+	{
+		return implode("\n",array_unique($this->use));
 	}
 	
 	public function source()
@@ -85,6 +92,8 @@ class Source
 	protected function method_source(\ReflectionClass $ref)
 	{
 		$result = null;
+		$source = null;
+		$filename = null;
 		foreach($ref->getMethods() as $method)
 		{
 			$name = $this->method_name_filter($method);
@@ -92,7 +101,12 @@ class Source
 			if(strpos($method->getDeclaringClass()->getName(),"Module") !== false) continue;
 			if(strpos($method->getName(),"__") !== false) continue;
 			$this->existing["methods"][] = $name;
-			$source = file($method->getFileName());
+			if($filename !== $method->getFileName())
+			{
+				$filename = $method->getFileName();
+				$source = file($filename);
+				$this->parse_use_declarations(implode("",$source));
+			}
 			$start = $method->getStartLine()-1;
 			$length = $method->getEndLine() - $start;
 			$source[$start] = str_replace($method->getName(),$name,$source[$start]);
@@ -107,6 +121,13 @@ class Source
 		$declared_clean = str_replace("\\","_",$method->getDeclaringClass()->getName());
 		if(in_array($name,$this->existing["methods"])) $name = "__super_{$declared_clean}_{$name}";
 		return $name;
+	}
+	
+	protected function parse_use_declarations($source)
+	{
+		$matches = array();
+		preg_match_all('/^\s*(use .*;)$/',$source,$matches);
+		foreach($matches as $match) $this->use[] = array_shift($match);
 	}
 	
 	protected function string_prepare($value)
