@@ -24,10 +24,8 @@ class Object extends Module
 				$this->instance->reflection = $this->reflection;
 				$this->instance->instance = $this->instance;
 			}
-			/*foreach(array_diff_key(get_class_vars($this->class),get_class_vars("\Phuby\Object")) as $prop=>$value)
-			{
-				$this->$prop = $this->instance->$prop;
-			}*/
+			foreach(array_diff_key(get_class_vars($this->class),get_class_vars("\Phuby\Object")) as $prop=>$value)
+				$this->instance->$prop = &$this->$prop;
 		}
 		if($this->respond_to("initialize"))
 			$this->send_array("initialize",func_get_args());
