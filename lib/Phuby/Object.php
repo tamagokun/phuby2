@@ -13,7 +13,8 @@ class Object extends Module
 	{
 		$this->class = get_class($this);
 		$this->derived = \Phuby\Module::derived($this->class);
-		$this->superclass = array_pop(class_parents($this->class));
+		$parents = class_parents($this->class);
+		$this->superclass = array_pop($parents);
 		if(!empty($this->derived))
 		{
 			$this->reflection = new \ReflectionClass($this->derived);
@@ -92,7 +93,9 @@ class Object extends Module
 	public function super($arguments=null)
 	{
 		$arguments = func_get_args();
-		$caller = array_pop(array_slice(debug_backtrace(),1,1));
+		$debug = array_slice(debug_backtrace(),1,1);
+		$caller = array_pop($debug);
+		
 		$method = $caller['function'];
 		$class = $this->class;
 		$mixins = $class::mixins();

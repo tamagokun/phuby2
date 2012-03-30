@@ -26,9 +26,10 @@ class Source
 		$raw = "<?php {$this->namespace_aliases()} class {$this->name()} { {$this->source()} } ?>";
 		if(ini_get('allow_url_include') > 0)
 			return require 'data:text/plain,base64,'.base64_encode($raw);
-		$tmp=array_search('uri', @array_flip(stream_get_meta_data($GLOBALS[mt_rand()]=tmpfile())));
-		file_put_contents($tmp,$raw);
-		return require $tmp;
+		//$tmp=array_search('uri', @array_flip(stream_get_meta_data($GLOBALS[mt_rand()]=tmpfile())));
+		$meta = stream_get_meta_data(tmpfile());
+		file_put_contents($meta['uri'],$raw);
+		return require $meta['uri'];
 	}
 	
 	public function generate()
