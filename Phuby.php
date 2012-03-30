@@ -1,6 +1,6 @@
 <?php
-require_once 'lib/ClassLoader.php';
-$loader = new ClassLoader(array('lib'));
+if(!class_exists("SplClassLoader")) require "vendor/SplClassLoader.php";
+$loader = new SplClassLoader('Phuby', __DIR__.'/lib');
 $loader->register();
 
 function a() { return new \Phuby\Arr(func_get_args()); }
